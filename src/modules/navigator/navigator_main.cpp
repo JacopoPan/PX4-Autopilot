@@ -239,6 +239,8 @@ void Navigator::run()
 			vehicle_command_s cmd{};
 			_vehicle_command_sub.copy(&cmd);
 
+			PX4_WARN("[Jacopo] Navigator::run %d", cmd.command);
+
 			if (_vehicle_command_sub.get_last_generation() != last_generation + 1) {
 				PX4_ERR("vehicle_command lost, generation %d -> %d", last_generation, _vehicle_command_sub.get_last_generation());
 			}
@@ -557,7 +559,16 @@ void Navigator::run()
 
 			} else if (cmd.command == vehicle_command_s::VEHICLE_CMD_NAV_VTOL_TAKEOFF) {
 
+				PX4_WARN("[Jacopo] Navigator::run on VEHICLE_CMD_NAV_VTOL_TAKEOFF");
+				PX4_WARN("[Jacopo] params 1-7 %f %f %f %f %f %f %f", static_cast<double>(cmd.param1), static_cast<double>(cmd.param2), static_cast<double>(cmd.param3), static_cast<double>(cmd.param4), static_cast<double>(cmd.param5), static_cast<double>(cmd.param6), static_cast<double>(cmd.param7));
+
 				_vtol_takeoff.setTransitionAltitudeAbsolute(cmd.param7);
+
+				float epsilon = 1e-6f;
+				if (std::fabs(cmd.param2 - 3.0f) < epsilon) { // Specified transition direction
+					PX4_WARN("[Jacopo] Navigator::run setTransitionDirecton");
+					_vtol_takeoff.setTransitionDirection(cmd.param4);
+				}
 
 				// after the transition the vehicle will establish on a loiter at this position
 				_vtol_takeoff.setLoiterLocation(matrix::Vector2d(cmd.param5, cmd.param6));

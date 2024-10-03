@@ -68,11 +68,25 @@ VtolTakeoff::on_active()
 		switch	(_takeoff_state) {
 		case vtol_takeoff_state::TAKEOFF_HOVER: {
 
+				PX4_WARN("[Jacopo] VtolTakeoff::on_active TAKEOFF_HOVER case");
+
 				position_setpoint_triplet_s *pos_sp_triplet = _navigator->get_position_setpoint_triplet();
 
 				_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
-				_mission_item.yaw = wrap_pi(get_bearing_to_next_waypoint(_navigator->get_home_position()->lat,
-							    _navigator->get_home_position()->lon, _loiter_location(0), _loiter_location(1)));
+
+
+				// NEW
+				if (std::isnan(_transition_direction_deg)) {
+					PX4_WARN("[Jacopo] Transition direction from Mission");
+					_mission_item.yaw = wrap_pi(get_bearing_to_next_waypoint(_navigator->get_home_position()->lat,
+							_navigator->get_home_position()->lon, _loiter_location(0), _loiter_location(1)));
+				} else {
+					PX4_WARN("[Jacopo] Transition direction from Command");
+					_mission_item.yaw = wrap_pi(math::radians(_transition_direction_deg));
+				}
+				//
+
+
 				_mission_item.force_heading = true;
 				mission_apply_limitation(_mission_item);
 				mission_item_to_position_setpoint(_mission_item, &pos_sp_triplet->current);
@@ -82,10 +96,14 @@ VtolTakeoff::on_active()
 
 				_takeoff_state = vtol_takeoff_state::ALIGN_HEADING;
 
+				PX4_WARN("[Jacopo] _mission_item.yaw %f", static_cast<double>(_mission_item.yaw));
+
 				break;
 			}
 
 		case vtol_takeoff_state::ALIGN_HEADING: {
+
+				PX4_WARN("[Jacopo] VtolTakeoff::on_active ALIGN_HEADING case");
 
 				set_vtol_transition_item(&_mission_item, vtol_vehicle_status_s::VEHICLE_VTOL_STATE_FW);
 				_mission_item.lat = _loiter_location(0);
@@ -103,6 +121,9 @@ VtolTakeoff::on_active()
 			}
 
 		case vtol_takeoff_state::TRANSITION: {
+
+				PX4_WARN("[Jacopo] VtolTakeoff::on_active TRANSITION case");
+
 				position_setpoint_triplet_s *pos_sp_triplet = _navigator->get_position_setpoint_triplet();
 
 				if (pos_sp_triplet->current.valid && pos_sp_triplet->current.type == position_setpoint_s::SETPOINT_TYPE_LOITER) {
@@ -143,6 +164,8 @@ VtolTakeoff::on_active()
 
 		case vtol_takeoff_state::CLIMB: {
 
+				PX4_WARN("[Jacopo] VtolTakeoff::on_active CLIMB case");
+
 				// reset any potentially valid reposition triplet which was not handled
 				// we do this to avoid random loiter locations after switching to loiter mode after this
 				position_setpoint_triplet_s *reposition_triplet = _navigator->get_reposition_triplet();
@@ -169,6 +192,9 @@ VtolTakeoff::on_active()
 void
 VtolTakeoff::set_takeoff_position()
 {
+
+	PX4_WARN("[Jacopo] VtolTakeoff::set_takeoff_position");
+
 	// set current mission item to takeoff
 	set_takeoff_item(&_mission_item, _transition_alt_amsl);
 

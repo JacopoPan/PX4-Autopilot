@@ -678,6 +678,8 @@ Commander::~Commander()
 bool
 Commander::handle_command(const vehicle_command_s &cmd)
 {
+	PX4_WARN("[Jacopo] Commander::handle_command %d", cmd.command);
+
 	/* only handle commands that are meant to be handled by this system and component, or broadcast */
 	if (((cmd.target_system != _vehicle_status.system_id) && (cmd.target_system != 0))
 	    || ((cmd.target_component != _vehicle_status.component_id) && (cmd.target_component != 0))) {
